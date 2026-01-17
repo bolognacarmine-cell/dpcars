@@ -308,6 +308,127 @@ header {
     border-color: var(--primary-red);
 }
 
+/* ===== SLIDER STYLES ===== */
+.vehicle-slider {
+    position: relative;
+    width: 100%;
+    height: 240px;
+    overflow: hidden;
+    background: var(--accent-light);
+}
+
+.slider-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+.slider-image {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0;
+    transition: opacity 0.4s ease-in-out;
+    pointer-events: none;
+}
+
+.slider-image.active {
+    opacity: 1;
+    z-index: 1;
+    pointer-events: auto;
+}
+
+.slider-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0, 0, 0, 0.6);
+    color: white;
+    border: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    cursor: pointer;
+    z-index: 10;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+}
+
+.slider-btn:hover {
+    background: rgba(211, 47, 47, 0.9);
+    transform: translateY(-50%) scale(1.1);
+}
+
+.slider-btn.prev {
+    left: 10px;
+}
+
+.slider-btn.next {
+    right: 10px;
+}
+
+.slider-dots {
+    position: absolute;
+    bottom: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 6px;
+    z-index: 10;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 6px 10px;
+    border-radius: 20px;
+}
+
+.slider-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.6);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.slider-dot.active {
+    background: white;
+    width: 10px;
+    height: 10px;
+}
+
+.slider-dot:hover {
+    background: rgba(255, 255, 255, 0.9);
+}
+
+/* Badge e status sopra lo slider */
+.vehicle-slider .vehicle-badge,
+.vehicle-slider .vehicle-status {
+    position: absolute;
+    z-index: 5;
+    padding: 0.4rem 0.8rem;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.vehicle-slider .vehicle-badge {
+    top: 10px;
+    left: 10px;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+}
+
+.vehicle-slider .vehicle-status {
+    top: 10px;
+    right: 10px;
+}
+
+/* Stili vecchi image wrapper (mantenuti per compatibilità) */
 .vehicle-image-wrapper {
     position: relative;
     height: 240px;
@@ -683,10 +804,12 @@ footer p {
         font-size: 16px;
     }
 }
-/* LOGO IMG (incolla in fondo al tuo style.css) */
-.logo-img{
-  width: 70px;
-  height: 45px;
-  object-fit: contain;
-  display: block;
+
+/* LOGO IMG */
+.logo-img {
+    width: 70px;
+    height: 45px;
+    object-fit: contain;
+    display: block;
 }
+

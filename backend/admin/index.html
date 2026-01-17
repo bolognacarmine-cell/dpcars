@@ -18,7 +18,6 @@
 </head>
 <body>
   <h1>Admin veicoli - DP CARS</h1>
-
   <p id="status"></p>
 
   <form id="vehicleForm" enctype="multipart/form-data">
@@ -47,6 +46,7 @@
     <input name="transmission" id="transmission" placeholder="Cambio (Manuale/Automatico)" required />
 
     <input name="images" id="images" type="file" accept="image/*" multiple class="full" />
+    <small style="color: #666;">Carica almeno 5 foto del veicolo</small>
 
     <button type="submit" class="full">Salva veicolo</button>
     <button type="button" id="resetBtn" class="full">Nuovo veicolo (reset)</button>
@@ -73,15 +73,26 @@
     const status = document.getElementById("status");
     const resetBtn = document.getElementById("resetBtn");
 
-    function setStatus(msg) { status.textContent = msg; }
+    function setStatus(msg) { 
+      status.textContent = msg; 
+      console.log("Status:", msg);
+    }
 
     async function loadVehicles() {
-      const res = await fetch(`${API}/api/admin/vehicles`);
-      const json = await res.json();
-      return json.data || [];
+      console.log("🔄 Caricamento veicoli...");
+      try {
+        const res = await fetch(`${API}/api/admin/vehicles`);
+        const json = await res.json();
+        console.log("✅ Veicoli caricati:", json.data?.length);
+        return json.data || [];
+      } catch (error) {
+        console.error("❌ Errore caricamento:", error);
+        return [];
+      }
     }
 
     function render(vehicles) {
+      console.log("🎨 Rendering", vehicles.length, "veicoli");
       rows.innerHTML = "";
       vehicles.forEach(v => {
         const tr = document.createElement("tr");
@@ -97,13 +108,69 @@
           </td>
           <td>
             <div class="row-actions">
-              <button data-edit="${v.id}">Modifica</button>
-              <button data-del="${v.id}">Elimina</button>
+              <button class="btn-edit" data-id="${v.id}">Modifica</button>
+              <button class="btn-delete" data-id="${v.id}">Elimina</button>
             </div>
           </td>
         `;
         rows.appendChild(tr);
       });
+
+      document.querySelectorAll('.btn-delete').forEach(btn => {
+        btn.addEventListener('click', handleDelete);
+      });
+
+      document.querySelectorAll('.btn-edit').forEach(btn => {
+        btn.addEventListener('click', handleEdit);
+      });
+    }
+
+    async function handleDelete(e) {
+      const id = e.target.getAttribute('data-id');
+      console.log("🗑️ Click elimina, ID:", id);
+      
+      if (!confirm(`Eliminare il veicolo ${id}?`)) {
+        console.log("❌ Eliminazione annullata");
+        return;
+      }
+
+      setStatus("Eliminazione in corso...");
+      
+      try {
+        console.log(`🔄 Invio DELETE a ${API}/api/admin/vehicles/${id}`);
+        const res = await fetch(`${API}/api/admin/vehicles/${id}`, { 
+          method: "DELETE"
+        });
+        
+        console.log("📩 Risposta ricevuta, status:", res.status);
+        
+        if (!res.ok) { 
+          const err = await res.json().catch(() => ({}));
+          setStatus("Errore eliminazione: " + (err.error || res.statusText)); 
+          return; 
+        }
+        
+        const result = await res.json();
+        console.log("✅ Risultato:", result);
+        
+        setStatus("Veicolo eliminato!");
+        await refresh();
+        
+      } catch (error) {
+        console.error("❌ Errore catturato:", error);
+        setStatus("Errore: " + error.message);
+      }
+    }
+
+    async function handleEdit(e) {
+      const id = e.target.getAttribute('data-id');
+      console.log("✏️ Click modifica, ID:", id);
+      const vehicles = await loadVehicles();
+      const v = vehicles.find(x => String(x.id) === String(id));
+      if (v) {
+        fillForm(v);
+        setStatus("Modifica veicolo " + id);
+      }
     }
 
     function fillForm(v) {
@@ -117,7 +184,6 @@
       document.getElementById("fuel").value = v.fuel || "";
       document.getElementById("transmission").value = v.transmission || "";
       document.getElementById("power").value = v.power || "";
-      // le immagini NON si precompilano per sicurezza del browser
     }
 
     async function refresh() {
@@ -128,55 +194,60 @@
 
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
+      
+      setStatus("Controllo foto...");
+      
+      const fileInput = document.getElementById("images");
+      const files = fileInput.files;
+      
+      console.log("📸 Numero foto selezionate:", files.length);
+      
+      if (files.length > 0 && files.length < 5) {
+        setStatus("❌ Errore: hai selezionato solo " + files.length + " foto!");
+        alert(`Hai selezionato solo ${files.length} foto. Devi caricarne almeno 5.`);
+        return;
+      }
+      
+      if (files.length === 0 && !document.getElementById("id").value) {
+        setStatus("❌ Errore: devi caricare almeno 5 foto!");
+        alert("Devi caricare almeno 5 foto del veicolo");
+        return;
+      }
+      
       setStatus("Salvataggio in corso...");
 
       const fd = new FormData(form);
 
-      // In questa prima versione usiamo solo CREATE.
-      // Se vuoi anche UPDATE, aggiungiamo PUT /api/admin/vehicles/:id.
-      const res = await fetch(`${API}/api/admin/vehicles`, {
-        method: "POST",
-        body: fd
-      });
+      try {
+        console.log(`📤 Invio POST con ${files.length} foto`);
+        const res = await fetch(`${API}/api/admin/vehicles`, {
+          method: "POST",
+          body: fd
+        });
 
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        setStatus("Errore: " + (err.error || res.statusText));
-        return;
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          setStatus("Errore: " + (err.error || res.statusText));
+          return;
+        }
+
+        const result = await res.json();
+        console.log("✅ Risposta:", result);
+        
+        setStatus(`Veicolo salvato con ${files.length} foto!`);
+        form.reset();
+        document.getElementById("id").value = "";
+        await refresh();
+      } catch (error) {
+        console.error("Errore POST:", error);
+        setStatus("Errore: " + error.message);
       }
-
-      setStatus("Veicolo salvato.");
-      form.reset();
-      document.getElementById("id").value = "";
-      await refresh();
     });
 
     resetBtn.addEventListener("click", () => {
       form.reset();
       document.getElementById("id").value = "";
       setStatus("Form resettato.");
-    });
-
-    document.addEventListener("click", async (e) => {
-      const delId = e.target.getAttribute("data-del");
-      const editId = e.target.getAttribute("data-edit");
-
-      if (delId) {
-        if (!confirm("Eliminare il veicolo " + delId + "?")) return;
-        const res = await fetch(`${API}/api/admin/vehicles/${delId}`, { method: "DELETE" });
-        if (!res.ok) { setStatus("Errore eliminazione"); return; }
-        setStatus("Eliminato.");
-        await refresh();
-      }
-
-      if (editId) {
-        const vehicles = await loadVehicles();
-        const v = vehicles.find(x => String(x.id) === String(editId));
-        if (v) {
-          fillForm(v);
-          setStatus("Modifica: aggiorna i campi e salva (per ora crea un nuovo record; se vuoi facciamo l'UPDATE vero).");
-        }
-      }
     });
 
     refresh().then(() => setStatus("Pronto."));

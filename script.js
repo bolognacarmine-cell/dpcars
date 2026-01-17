@@ -1,11 +1,11 @@
 document.addEventListener('DOMContentLoaded', function() {
   // ====== CONFIG ======
-  const API_BASE = 'http://192.168.1.188:3001';
+  const API_BASE = 'https://dpcars.onrender.com';
   const CACHE_KEY = 'dpcars_vehicles_cache';
   const CACHE_TIMESTAMP_KEY = 'dpcars_vehicles_timestamp';
   const CACHE_MAX_AGE = 1000 * 60 * 60; // 1 ora
 
-  // Stato inventario (ora arriva dal backend)
+  // Stato inventario
   let vehicles = [];
   let currentPage = 1;
   const limit = 6;
@@ -47,13 +47,83 @@ document.addEventListener('DOMContentLoaded', function() {
     return null;
   }
 
-  // ====== RENDER VEHICLES ======
+  // ====== SLIDER SETUP ======
+  function setupSlider(card, images) {
+    if (images.length <= 1) return;
+
+    const sliderImages = card.querySelectorAll('.slider-image');
+    const dots = card.querySelectorAll('.slider-dot');
+    const prevBtn = card.querySelector('.slider-btn.prev');
+    const nextBtn = card.querySelector('.slider-btn.next');
+    let currentIndex = 0;
+
+    function showImage(index) {
+      sliderImages.forEach(img => img.classList.remove('active'));
+      dots.forEach(dot => dot.classList.remove('active'));
+      
+      sliderImages[index].classList.add('active');
+      dots[index].classList.add('active');
+      currentIndex = index;
+    }
+
+    if (prevBtn) {
+      prevBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const newIndex = currentIndex === 0 ? images.length - 1 : currentIndex - 1;
+        showImage(newIndex);
+      });
+    }
+
+    if (nextBtn) {
+      nextBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const newIndex = currentIndex === images.length - 1 ? 0 : currentIndex + 1;
+        showImage(newIndex);
+      });
+    }
+
+    dots.forEach((dot, index) => {
+      dot.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        showImage(index);
+      });
+    });
+
+    // Touch/swipe support
+    let touchStartX = 0;
+    let touchEndX = 0;
+
+    const sliderContainer = card.querySelector('.vehicle-slider');
+    
+    sliderContainer.addEventListener('touchstart', (e) => {
+      touchStartX = e.changedTouches[0].screenX;
+    });
+
+    sliderContainer.addEventListener('touchend', (e) => {
+      touchEndX = e.changedTouches[0].screenX;
+      handleSwipe();
+    });
+
+    function handleSwipe() {
+      if (touchEndX < touchStartX - 50) {
+        const newIndex = currentIndex === images.length - 1 ? 0 : currentIndex + 1;
+        showImage(newIndex);
+      }
+      if (touchEndX > touchStartX + 50) {
+        const newIndex = currentIndex === 0 ? images.length - 1 : currentIndex - 1;
+        showImage(newIndex);
+      }
+    }
+  }
+
+  // ====== RENDER VEHICLES CON SLIDER ======
   function renderVehicles(vehiclesToRender) {
-    // Rimuovi banner offline precedente se esiste
     const oldBanner = inventoryGrid.querySelector('.offline-banner');
     if (oldBanner) oldBanner.remove();
 
-    // Mostra banner offline se necessario
     if (isOfflineMode) {
       const banner = document.createElement('div');
       banner.className = 'offline-banner';
@@ -81,19 +151,46 @@ document.addEventListener('DOMContentLoaded', function() {
 
       const vehicleType = vehicle.type === 'auto' ? 'Auto' : 'Moto';
 
-      // Se le immagini arrivano come "/uploads/xxx.jpg" dal backend, aggiungi base URL
-      const firstImg = (vehicle.images && vehicle.images[0]) ? vehicle.images[0] : '';
-      const imgSrc = firstImg.startsWith('http') ? firstImg : (firstImg ? `${API_BASE}${firstImg}` : '');
+      // Gestione immagini multiple
+      const images = (vehicle.images && vehicle.images.length > 0) 
+        ? vehicle.images 
+        : ['https://via.placeholder.com/640x360?text=' + encodeURIComponent(vehicle.title)];
+
+      // Crea HTML slider
+      const sliderHTML = `
+        <div class="vehicle-slider">
+          <div class="slider-container">
+            ${images.map((img, index) => {
+              const imgSrc = img.startsWith('http') ? img : `${API_BASE}${img}`;
+              return `<img src="${imgSrc}" 
+                          alt="${vehicle.title} - Foto ${index + 1}" 
+                          class="slider-image ${index === 0 ? 'active' : ''}" 
+                          loading="lazy"
+                          onerror="this.src='https://via.placeholder.com/640x360?text=${encodeURIComponent(vehicle.title)}'">`;
+            }).join('')}
+          </div>
+          ${images.length > 1 ? `
+            <button class="slider-btn prev" aria-label="Foto precedente">
+              <i class="fas fa-chevron-left"></i>
+            </button>
+            <button class="slider-btn next" aria-label="Foto successiva">
+              <i class="fas fa-chevron-right"></i>
+            </button>
+            <div class="slider-dots">
+              ${images.map((_, index) => 
+                `<span class="slider-dot ${index === 0 ? 'active' : ''}" data-index="${index}"></span>`
+              ).join('')}
+            </div>
+          ` : ''}
+          <span class="vehicle-badge">${vehicleType}</span>
+          <span class="vehicle-status ${statusClass}">${statusText}</span>
+        </div>
+      `;
 
       const card = document.createElement('div');
       card.className = 'vehicle-card';
       card.innerHTML = `
-        <div class="vehicle-image-wrapper">
-          <img src="${imgSrc}" alt="${vehicle.title}" class="vehicle-image" loading="lazy"
-               onerror="this.src='https://via.placeholder.com/640x360?text=${encodeURIComponent(vehicle.title)}'">
-          <span class="vehicle-badge">${vehicleType}</span>
-          <span class="vehicle-status ${statusClass}">${statusText}</span>
-        </div>
+        ${sliderHTML}
         <div class="vehicle-details">
           <h3 class="vehicle-title">${vehicle.title}</h3>
           <div class="vehicle-price">€ ${(Number(vehicle.price) || 0).toLocaleString('it-IT')}</div>
@@ -113,9 +210,6 @@ document.addEventListener('DOMContentLoaded', function() {
             <span class="spec-item">
               <i class="fas fa-bolt"></i> ${vehicle.power || ''}
             </span>
-            <span class="spec-item">
-              <i class="fas fa-info-circle"></i> ${vehicle.type === 'auto' ? 'Auto' : 'Moto'}
-            </span>
           </div>
           <div class="vehicle-actions">
             <a href="tel:333330834" class="action-button button-call">
@@ -128,15 +222,20 @@ document.addEventListener('DOMContentLoaded', function() {
           </div>
         </div>
       `;
+      
       inventoryGrid.appendChild(card);
+
+      // Setup slider dopo aver aggiunto la card al DOM
+      if (images.length > 1) {
+        setupSlider(card, images);
+      }
     });
   }
 
-  // Legge i filtri UI e costruisce la query per il backend
   function buildQuery(page) {
-    const typeValue = vehicleTypeFilter.value;           // all/auto/moto
-    const sortValue = sortByFilter.value;               // price-asc, ecc.
-    const searchValue = searchInput.value.trim();        // testo libero
+    const typeValue = vehicleTypeFilter.value;
+    const sortValue = sortByFilter.value;
+    const searchValue = searchInput.value.trim();
 
     const params = new URLSearchParams();
     params.set('type', typeValue || 'all');
@@ -147,16 +246,14 @@ document.addEventListener('DOMContentLoaded', function() {
     return params.toString();
   }
 
-  // ====== CARICA DAL BACKEND CON FALLBACK ======
   async function loadVehiclesPage(page, mode = 'replace') {
-    // Feedback visivo
     if (inventoryGrid) inventoryGrid.style.opacity = '0.6';
     if (loadMoreButton) loadMoreButton.disabled = true;
 
     try {
       const url = `${API_BASE}/api/vehicles?${buildQuery(page)}`;
       const res = await fetch(url, { 
-        signal: AbortSignal.timeout(5000) // timeout 5 secondi
+        signal: AbortSignal.timeout(5000)
       });
       
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -172,14 +269,12 @@ document.addEventListener('DOMContentLoaded', function() {
         vehicles = pageData;
       }
 
-      // ✅ SALVA IN CACHE
       saveToCache(vehicles);
       isOfflineMode = false;
 
-      inventoryGrid.innerHTML = ''; // pulisci griglia
+      inventoryGrid.innerHTML = '';
       renderVehicles(vehicles);
 
-      // Gestione bottone "Carica altri"
       const loadedCount = vehicles.length;
       const hasMore = loadedCount < total;
       loadMoreButton.style.display = hasMore ? 'inline-flex' : 'none';
@@ -187,7 +282,6 @@ document.addEventListener('DOMContentLoaded', function() {
     } catch (err) {
       console.error('Backend offline o errore rete:', err);
       
-      // ✅ FALLBACK: usa cache localStorage
       const cached = loadFromCache();
       
       if (cached && cached.length > 0) {
@@ -195,12 +289,11 @@ document.addEventListener('DOMContentLoaded', function() {
         total = cached.length;
         isOfflineMode = true;
         
-        inventoryGrid.innerHTML = ''; // pulisci griglia
+        inventoryGrid.innerHTML = '';
         renderVehicles(vehicles);
         loadMoreButton.style.display = 'none';
         
       } else {
-        // Nessuna cache disponibile
         inventoryGrid.innerHTML = `
           <div style="grid-column: 1/-1; text-align: center; padding: 3rem; color: #b71c1c;">
             <i class="fas fa-exclamation-circle" style="font-size: 3rem; margin-bottom: 1rem; display: block;"></i>
@@ -219,13 +312,11 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
 
-  // Quando cambi filtro/ricerca/sort: riparti dalla pagina 1
   async function refreshInventoryFromFilters() {
     currentPage = 1;
     await loadVehiclesPage(currentPage, 'replace');
   }
 
-  // Sync sort filters
   function syncSortFilters(value) {
     sortByFilter.value = value;
     sortByHeaderFilter.value = value;
@@ -237,7 +328,6 @@ document.addEventListener('DOMContentLoaded', function() {
   sortByFilter.addEventListener('change', (e) => syncSortFilters(e.target.value));
   sortByHeaderFilter.addEventListener('change', (e) => syncSortFilters(e.target.value));
 
-  // Debounce semplice per la ricerca
   let searchTimer = null;
   searchInput.addEventListener('input', () => {
     clearTimeout(searchTimer);
@@ -249,7 +339,6 @@ document.addEventListener('DOMContentLoaded', function() {
     await loadVehiclesPage(currentPage, 'append');
   });
 
-  // Contact form (demo)
   if (contactForm) {
     contactForm.addEventListener('submit', function(e) {
       e.preventDefault();
@@ -269,7 +358,6 @@ document.addEventListener('DOMContentLoaded', function() {
   // ====== INITIAL LOAD ======
   refreshInventoryFromFilters();
   
-  // Sticky header scroll effect (opzionale)
   window.addEventListener('scroll', () => {
     const header = document.querySelector('header');
     if (header) {
