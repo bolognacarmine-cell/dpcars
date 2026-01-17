@@ -180,7 +180,7 @@ app.delete("/api/admin/vehicles/:id", (req, res) => {
   }
 });
 
-const PORT = process.env.PORT || 3001;
+const API_BASE = 'https://dpcars.onrender.com';
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`\n🚗 ==========================================`);
   console.log(`✅ Server DP Cars avviato su porta ${PORT}`);
