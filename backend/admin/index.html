@@ -1,185 +1,403 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="it">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Admin DP CARS</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel - DP Cars</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    body { font-family: Arial, sans-serif; max-width: 980px; margin: 20px auto; padding: 0 12px; }
-    form { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 12px; border: 1px solid #ddd; border-radius: 8px; }
-    form .full { grid-column: 1 / -1; }
-    input, select, button, textarea { padding: 10px; font-size: 14px; }
-    button { cursor: pointer; }
-    table { width: 100%; border-collapse: collapse; margin-top: 16px; }
-    th, td { border: 1px solid #ddd; padding: 8px; vertical-align: top; }
-    img { width: 110px; height: 70px; object-fit: cover; border-radius: 6px; }
-    .row-actions { display:flex; gap:8px; }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .header {
+      background: white;
+      padding: 20px 30px;
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      margin-bottom: 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .header h1 {
+      color: #333;
+      font-size: 28px;
+    }
+
+    .btn {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s;
+    }
+
+    .btn-primary {
+      background: #b71c1c;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #8b0000;
+    }
+
+    .sections {
+      display: grid;
+      grid-template-columns: 1fr 2fr;
+      gap: 20px;
+    }
+
+    .card {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+
+    .card h2 {
+      margin-bottom: 20px;
+      color: #333;
+      border-bottom: 2px solid #b71c1c;
+      padding-bottom: 10px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      color: #555;
+      font-weight: 600;
+    }
+
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: #b71c1c;
+    }
+
+    #preview-images {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    #preview-images img {
+      width: 100%;
+      height: 100px;
+      object-fit: cover;
+      border-radius: 6px;
+      border: 2px solid #ddd;
+    }
+
+    .vehicle-list {
+      display: grid;
+      gap: 15px;
+    }
+
+    .vehicle-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      border-left: 4px solid #b71c1c;
+    }
+
+    .vehicle-info h3 {
+      color: #333;
+      margin-bottom: 5px;
+    }
+
+    .vehicle-info p {
+      color: #666;
+      font-size: 14px;
+    }
+
+    .btn-delete {
+      background: #dc3545;
+      color: white;
+      padding: 8px 16px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .btn-delete:hover {
+      background: #c82333;
+    }
+
+    .alert {
+      padding: 15px;
+      border-radius: 6px;
+      margin-bottom: 20px;
+      display: none;
+    }
+
+    .alert-success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+
+    .alert-error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+
+    @media (max-width: 768px) {
+      .sections {
+        grid-template-columns: 1fr;
+      }
+    }
   </style>
 </head>
 <body>
-  <h1>Admin veicoli - DP CARS</h1>
+  <div class="container">
+    <div class="header">
+      <h1><i class="fas fa-car"></i> DP Cars - Pannello Admin</h1>
+      <a href="/" class="btn btn-primary"><i class="fas fa-home"></i> Torna al Sito</a>
+    </div>
 
-  <p id="status"></p>
+    <div id="alert" class="alert"></div>
 
-  <form id="vehicleForm" enctype="multipart/form-data">
-    <input type="hidden" name="id" id="id" />
+    <div class="sections">
+      <!-- Form Aggiungi Veicolo -->
+      <div class="card">
+        <h2><i class="fas fa-plus-circle"></i> Aggiungi Veicolo</h2>
+        <form id="vehicle-form">
+          <div class="form-group">
+            <label>Tipo *</label>
+            <select name="type" required>
+              <option value="auto">Auto</option>
+              <option value="moto">Moto</option>
+            </select>
+          </div>
 
-    <select name="type" id="type" required>
-      <option value="auto">Auto</option>
-      <option value="moto">Moto</option>
-    </select>
+          <div class="form-group">
+            <label>Titolo *</label>
+            <input type="text" name="title" placeholder="es. BMW Serie 3" required>
+          </div>
 
-    <select name="status" id="statusField" required>
-      <option value="available">Disponibile</option>
-      <option value="reserved">Prenotata</option>
-      <option value="sold">Venduta</option>
-    </select>
+          <div class="form-group">
+            <label>Prezzo (€) *</label>
+            <input type="number" name="price" placeholder="es. 15000" required>
+          </div>
 
-    <input name="title" id="title" placeholder="Titolo (es. Fiat Panda 1.2 Lounge)" class="full" required />
+          <div class="form-group">
+            <label>Anno *</label>
+            <input type="number" name="year" placeholder="es. 2020" required>
+          </div>
 
-    <input name="price" id="price" type="number" placeholder="Prezzo" required />
-    <input name="year" id="year" type="number" placeholder="Anno" required />
+          <div class="form-group">
+            <label>Km *</label>
+            <input type="number" name="km" placeholder="es. 50000" required>
+          </div>
 
-    <input name="km" id="km" type="number" placeholder="Km" required />
-    <input name="power" id="power" placeholder="Potenza (es. 110 CV)" required />
+          <div class="form-group">
+            <label>Carburante *</label>
+            <select name="fuel" required>
+              <option value="Benzina">Benzina</option>
+              <option value="Diesel">Diesel</option>
+              <option value="GPL">GPL</option>
+              <option value="Metano">Metano</option>
+              <option value="Elettrico">Elettrico</option>
+              <option value="Ibrido">Ibrido</option>
+            </select>
+          </div>
 
-    <input name="fuel" id="fuel" placeholder="Alimentazione (Benzina/Diesel...)" required />
-    <input name="transmission" id="transmission" placeholder="Cambio (Manuale/Automatico)" required />
+          <div class="form-group">
+            <label>Cambio *</label>
+            <select name="transmission" required>
+              <option value="Manuale">Manuale</option>
+              <option value="Automatico">Automatico</option>
+            </select>
+          </div>
 
-    <input name="images" id="images" type="file" accept="image/*" multiple class="full" />
+          <div class="form-group">
+            <label>Potenza *</label>
+            <input type="text" name="power" placeholder="es. 150 CV" required>
+          </div>
 
-    <button type="submit" class="full">Salva veicolo</button>
-    <button type="button" id="resetBtn" class="full">Nuovo veicolo (reset)</button>
-  </form>
+          <div class="form-group">
+            <label>Stato *</label>
+            <select name="status" required>
+              <option value="available">Disponibile</option>
+              <option value="reserved">Prenotata</option>
+              <option value="sold">Venduta</option>
+            </select>
+          </div>
 
-  <h2>Elenco veicoli</h2>
-  <table>
-    <thead>
-      <tr>
-        <th>ID</th>
-        <th>Foto</th>
-        <th>Titolo</th>
-        <th>Dati</th>
-        <th>Azioni</th>
-      </tr>
-    </thead>
-    <tbody id="rows"></tbody>
-  </table>
+          <div class="form-group">
+            <label>Foto (minimo 5) *</label>
+            <input type="file" id="images" name="images" accept="image/*" multiple required>
+            <div id="preview-images"></div>
+          </div>
+
+          <button type="submit" class="btn btn-primary" style="width: 100%;">
+            <i class="fas fa-save"></i> Aggiungi Veicolo
+          </button>
+        </form>
+      </div>
+
+      <!-- Lista Veicoli -->
+      <div class="card">
+        <h2><i class="fas fa-list"></i> Veicoli Caricati</h2>
+        <div id="vehicles-list" class="vehicle-list">
+          <p style="text-align: center; color: #999;">Caricamento...</p>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <script>
-    const API = "http://localhost:3001";
-    const form = document.getElementById("vehicleForm");
-    const rows = document.getElementById("rows");
-    const status = document.getElementById("status");
-    const resetBtn = document.getElementById("resetBtn");
+    const API_BASE = 'https://dpcars.onrender.com';
 
-    function setStatus(msg) { status.textContent = msg; }
+    // Preview immagini
+    document.getElementById('images').addEventListener('change', function(e) {
+      const preview = document.getElementById('preview-images');
+      preview.innerHTML = '';
+      
+      const files = Array.from(e.target.files);
+      files.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = function(event) {
+          const img = document.createElement('img');
+          img.src = event.target.result;
+          preview.appendChild(img);
+        };
+        reader.readAsDataURL(file);
+      });
+    });
 
+    // Mostra alert
+    function showAlert(message, type) {
+      const alert = document.getElementById('alert');
+      alert.textContent = message;
+      alert.className = `alert alert-${type}`;
+      alert.style.display = 'block';
+      setTimeout(() => alert.style.display = 'none', 5000);
+    }
+
+    // Carica veicoli
     async function loadVehicles() {
-      const res = await fetch(`${API}/api/admin/vehicles`);
-      const json = await res.json();
-      return json.data || [];
-    }
+      try {
+        const response = await fetch(`${API_BASE}/api/admin/vehicles`);
+        const json = await response.json();
+        const vehicles = json.data || [];
 
-    function render(vehicles) {
-      rows.innerHTML = "";
-      vehicles.forEach(v => {
-        const tr = document.createElement("tr");
-        const img = (v.images && v.images[0]) ? `${API}${v.images[0]}` : "";
-        tr.innerHTML = `
-          <td>${v.id}</td>
-          <td>${img ? `<img src="${img}" alt="">` : ""}</td>
-          <td>${v.title || ""}</td>
-          <td>
-            ${v.type || ""} - ${v.status || ""}<br>
-            € ${Number(v.price || 0).toLocaleString("it-IT")}<br>
-            ${v.year || ""} - ${Number(v.km || 0).toLocaleString("it-IT")} km
-          </td>
-          <td>
-            <div class="row-actions">
-              <button data-edit="${v.id}">Modifica</button>
-              <button data-del="${v.id}">Elimina</button>
+        const list = document.getElementById('vehicles-list');
+        
+        if (vehicles.length === 0) {
+          list.innerHTML = '<p style="text-align: center; color: #999;">Nessun veicolo caricato</p>';
+          return;
+        }
+
+        list.innerHTML = vehicles.map(v => `
+          <div class="vehicle-item">
+            <div class="vehicle-info">
+              <h3>${v.title}</h3>
+              <p>€ ${v.price.toLocaleString()} • ${v.year} • ${v.km.toLocaleString()} km • ${v.fuel}</p>
             </div>
-          </td>
-        `;
-        rows.appendChild(tr);
-      });
+            <button class="btn-delete" onclick="deleteVehicle(${v.id})">
+              <i class="fas fa-trash"></i> Elimina
+            </button>
+          </div>
+        `).join('');
+      } catch (error) {
+        console.error('Errore caricamento:', error);
+        showAlert('Errore nel caricamento dei veicoli', 'error');
+      }
     }
 
-    function fillForm(v) {
-      document.getElementById("id").value = v.id;
-      document.getElementById("type").value = v.type || "auto";
-      document.getElementById("statusField").value = v.status || "available";
-      document.getElementById("title").value = v.title || "";
-      document.getElementById("price").value = v.price ?? "";
-      document.getElementById("year").value = v.year ?? "";
-      document.getElementById("km").value = v.km ?? "";
-      document.getElementById("fuel").value = v.fuel || "";
-      document.getElementById("transmission").value = v.transmission || "";
-      document.getElementById("power").value = v.power || "";
-      // le immagini NON si precompilano per sicurezza del browser
-    }
-
-    async function refresh() {
-      const vehicles = await loadVehicles();
-      render(vehicles);
-      return vehicles;
-    }
-
-    form.addEventListener("submit", async (e) => {
+    // Aggiungi veicolo
+    document.getElementById('vehicle-form').addEventListener('submit', async function(e) {
       e.preventDefault();
-      setStatus("Salvataggio in corso...");
 
-      const fd = new FormData(form);
-
-      // In questa prima versione usiamo solo CREATE.
-      // Se vuoi anche UPDATE, aggiungiamo PUT /api/admin/vehicles/:id.
-      const res = await fetch(`${API}/api/admin/vehicles`, {
-        method: "POST",
-        body: fd
-      });
-
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        setStatus("Errore: " + (err.error || res.statusText));
+      const files = document.getElementById('images').files;
+      if (files.length < 5) {
+        showAlert('Devi caricare almeno 5 foto!', 'error');
         return;
       }
 
-      setStatus("Veicolo salvato.");
-      form.reset();
-      document.getElementById("id").value = "";
-      await refresh();
-    });
+      const formData = new FormData(this);
 
-    resetBtn.addEventListener("click", () => {
-      form.reset();
-      document.getElementById("id").value = "";
-      setStatus("Form resettato.");
-    });
+      try {
+        const response = await fetch(`${API_BASE}/api/admin/vehicles`, {
+          method: 'POST',
+          body: formData
+        });
 
-    document.addEventListener("click", async (e) => {
-      const delId = e.target.getAttribute("data-del");
-      const editId = e.target.getAttribute("data-edit");
+        const result = await response.json();
 
-      if (delId) {
-        if (!confirm("Eliminare il veicolo " + delId + "?")) return;
-        const res = await fetch(`${API}/api/admin/vehicles/${delId}`, { method: "DELETE" });
-        if (!res.ok) { setStatus("Errore eliminazione"); return; }
-        setStatus("Eliminato.");
-        await refresh();
-      }
-
-      if (editId) {
-        const vehicles = await loadVehicles();
-        const v = vehicles.find(x => String(x.id) === String(editId));
-        if (v) {
-          fillForm(v);
-          setStatus("Modifica: aggiorna i campi e salva (per ora crea un nuovo record; se vuoi facciamo l'UPDATE vero).");
+        if (response.ok) {
+          showAlert('Veicolo aggiunto con successo!', 'success');
+          this.reset();
+          document.getElementById('preview-images').innerHTML = '';
+          loadVehicles();
+        } else {
+          showAlert(result.error || 'Errore durante l\'aggiunta', 'error');
         }
+      } catch (error) {
+        console.error('Errore:', error);
+        showAlert('Errore di connessione al server', 'error');
       }
     });
 
-    refresh().then(() => setStatus("Pronto."));
+    // Elimina veicolo
+    async function deleteVehicle(id) {
+      if (!confirm('Sei sicuro di voler eliminare questo veicolo?')) return;
+
+      try {
+        const response = await fetch(`${API_BASE}/api/admin/vehicles/${id}`, {
+          method: 'DELETE'
+        });
+
+        if (response.ok) {
+          showAlert('Veicolo eliminato con successo!', 'success');
+          loadVehicles();
+        } else {
+          showAlert('Errore durante l\'eliminazione', 'error');
+        }
+      } catch (error) {
+        console.error('Errore:', error);
+        showAlert('Errore di connessione al server', 'error');
+      }
+    }
+
+    // Carica veicoli all'avvio
+    loadVehicles();
   </script>
 </body>
 </html>
