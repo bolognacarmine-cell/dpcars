@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin DP Cars - Gestione Veicoli</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #1a1a1a 0%, #2c2c2c 100%);
+      min-height: 100vh;
+      padding: 20px;
+      color: #333;
+    }
+
+    .container {
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+
+    header {
+      background: white;
+      padding: 25px 30px;
+      border-radius: 15px;
+      margin-bottom: 30px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    }
+
+    .header-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    h1 {
+      color: #d32f2f;
+      font-size: 2.2rem;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .logo-admin {
+      width: 60px;
+      height: auto;
+      border-radius: 8px;
+    }
+
+    .back-btn {
+      background: #1a1a1a;
+      color: white;
+      padding: 12px 24px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.3s;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .back-btn:hover {
+      background: #d32f2f;
+      transform: translateY(-2px);
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+    }
+
+    .stat-card {
+      background: linear-gradient(135deg, #d32f2f 0%, #b71c1c 100%);
+      color: white;
+      padding: 20px;
+      border-radius: 12px;
+      text-align: center;
+      box-shadow: 0 5px 15px rgba(211, 47, 47, 0.3);
+    }
+
+    .stat-card strong {
+      font-size: 2.5rem;
+      display: block;
+      margin-bottom: 8px;
+    }
+
+    .stat-card span {
+      font-size: 0.95rem;
+      opacity: 0.9;
+    }
+
+    .content {
+      display: grid;
+      grid-template-columns: 400px 1fr;
+      gap: 30px;
+    }
+
+    .form-section, .list-section {
+      background: white;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    }
+
+    h2 {
+      color: #1a1a1a;
+      margin-bottom: 25px;
+      font-size: 1.6rem;
+      border-bottom: 3px solid #d32f2f;
+      padding-bottom: 12px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      color: #333;
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 12px 15px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-family: inherit;
+      transition: all 0.3s;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: #d32f2f;
+      box-shadow: 0 0 0 3px rgba(211, 47, 47, 0.1);
+    }
+
+    input[type="file"] {
+      padding: 10px;
+      cursor: pointer;
+      border-style: dashed;
+    }
+
+    .file-info {
+      margin-top: 8px;
+      font-size: 0.85rem;
+      color: #666;
+      font-weight: 500;
+    }
+
+    button {
+      width: 100%;
+      padding: 15px;
+      background: linear-gradient(135deg, #d32f2f 0%, #b71c1c 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    button:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(211, 47, 47, 0.4);
+    }
+
+    button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .vehicles-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 25px;
+      margin-top: 25px;
+    }
+
+    .vehicle-card {
+      background: white;
+      border: 2px solid #e0e0e0;
+      border-radius: 12px;
+      overflow: hidden;
+      transition: all 0.3s;
+      position: relative;
+    }
+
+    .vehicle-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+      border-color: #d32f2f;
+    }
+
+    .vehicle-image {
+      width: 100%;
+      height: 220px;
+      object-fit: cover;
+      background: #f5f5f5;
+    }
+
+    .vehicle-info {
+      padding: 20px;
+    }
+
+    .vehicle-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #1a1a1a;
+      margin-bottom: 12px;
+    }
+
+    .vehicle-details {
+      font-size: 0.9rem;
+      color: #666;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .vehicle-price {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: #d32f2f;
+      margin: 15px 0;
+    }
+
+    .vehicle-type {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      background: rgba(26, 26, 26, 0.9);
+      color: white;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .delete-btn {
+      width: 100%;
+      padding: 12px;
+      background: #e74c3c;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s;
+      margin-top: 12px;
+    }
+
+    .delete-btn:hover {
+      background: #c0392b;
+      transform: translateY(-2px);
+    }
+
+    .alert {
+      padding: 15px 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      font-weight: 500;
+      animation: slideIn 0.3s ease;
+    }
+
+    .alert-success {
+      background: #d4edda;
+      color: #155724;
+      border-left: 4px solid #28a745;
+    }
+
+    .alert-error {
+      background: #f8d7da;
+      color: #721c24;
+      border-left: 4px solid #dc3545;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .loading {
+      text-align: center;
+      padding: 60px 20px;
+      color: #666;
+      font-size: 1.2rem;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 80px 20px;
+      color: #999;
+    }
+
+    .empty-state svg {
+      width: 120px;
+      height: 120px;
+      margin-bottom: 20px;
+      opacity: 0.3;
+    }
+
+    @media (max-width: 1200px) {
+      .content {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .stats {
+        grid-template-columns: 1fr;
+      }
+
+      h1 {
+        font-size: 1.6rem;
+      }
+
+      .vehicles-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="header-content">
+        <h1>
+          <img src="logo.jpg" alt="DP Cars" class="logo-admin" onerror="this.style.display='none'">
+          🚗 Admin DP Cars
+        </h1>
+        <a href="index.html" class="back-btn">
+          ← Torna al Sito
+        </a>
+      </div>
+      <p style="color: #666; margin-bottom: 20px;">Pannello di Controllo - Gestione Inventario Veicoli</p>
+      <div class="stats">
+        <div class="stat-card">
+          <strong id="totalVehicles">0</strong>
+          <span>Veicoli Totali</span>
+        </div>
+        <div class="stat-card">
+          <strong id="totalAuto">0</strong>
+          <span>Auto</span>
+        </div>
+        <div class="stat-card">
+          <strong id="totalMoto">0</strong>
+          <span>Moto</span>
+        </div>
+        <div class="stat-card">
+          <strong id="totalAvailable">0</strong>
+          <span>Disponibili</span>
+        </div>
+      </div>
+    </header>
+
+    <div class="content">
+      <!-- FORM SEZIONE -->
+      <div class="form-section">
+        <h2>➕ Aggiungi Nuovo Veicolo</h2>
+        
+        <div id="alertContainer"></div>
+
+        <form id="vehicleForm" enctype="multipart/form-data">
+          <div class="form-group">
+            <label for="type">Tipo Veicolo *</label>
+            <select id="type" name="type" required>
+              <option value="auto">🚗 Auto</option>
+              <option value="moto">🏍️ Moto</option>
+              <option value="furgone">🚐 Furgone</option>
+              <option value="camper">🚙 Camper</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="title">Titolo *</label>
+            <input type="text" id="title" name="title" placeholder="es. Fiat 500 1.2 Lounge" required minlength="3">
+          </div>
+
+          <div class="form-group">
+            <label for="price">Prezzo (€) *</label>
+            <input type="number" id="price" name="price" placeholder="12000" required min="1">
+          </div>
+
+          <div class="form-group">
+            <label for="year">Anno *</label>
+            <input type="number" id="year" name="year" placeholder="2020" required min="1900" max="2027">
+          </div>
+
+          <div class="form-group">
+            <label for="km">Chilometri *</label>
+            <input type="number" id="km" name="km" placeholder="50000" required min="0">
+          </div>
+
+          <div class="form-group">
+            <label for="fuel">Carburante</label>
+            <select id="fuel" name="fuel">
+              <option value="">Seleziona...</option>
+              <option value="Benzina">Benzina</option>
+              <option value="Diesel">Diesel</option>
+              <option value="GPL">GPL</option>
+              <option value="Metano">Metano</option>
+              <option value="Elettrica">Elettrica</option>
+              <option value="Ibrida">Ibrida</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="transmission">Cambio</label>
+            <select id="transmission" name="transmission">
+              <option value="">Seleziona...</option>
+              <option value="Manuale">Manuale</option>
+              <option value="Automatico">Automatico</option>
+              <option value="Sequenziale">Sequenziale</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="power">Potenza</label>
+            <input type="text" id="power" name="power" placeholder="es. 90 CV / 75 kW">
+          </div>
+
+          <div class="form-group">
+            <label for="status">Stato</label>
+            <select id="status" name="status">
+              <option value="available">✅ Disponibile</option>
+              <option value="reserved">⏳ Prenotato</option>
+              <option value="sold">❌ Venduto</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="images">Foto Veicolo * (Minimo 5 foto)</label>
+            <input type="file" id="images" name="images" accept="image/jpeg,image/jpg,image/png,image/webp" multiple required>
+            <div class="file-info">
+              <span id="fileCount">Nessun file selezionato</span>
+            </div>
+          </div>
+
+          <button type="submit" id="submitBtn">
+            <span id="btnText">✅ Aggiungi Veicolo</span>
+          </button>
+        </form>
+      </div>
+
+      <!-- LISTA VEICOLI -->
+      <div class="list-section">
+        <h2>📋 Veicoli Registrati</h2>
+        <div id="vehiclesList" class="loading">⏳ Caricamento veicoli...</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = 'http://localhost:10000/api';
+    
+    // Elementi DOM
+    const form = document.getElementById('vehicleForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const btnText = document.getElementById('btnText');
+    const alertContainer = document.getElementById('alertContainer');
+    const vehiclesList = document.getElementById('vehiclesList');
+    const fileInput = document.getElementById('images');
+    const fileCount = document.getElementById('fileCount');
+    
+    // Contatori
+    const totalVehicles = document.getElementById('totalVehicles');
+    const totalAuto = document.getElementById('totalAuto');
+    const totalMoto = document.getElementById('totalMoto');
+    const totalAvailable = document.getElementById('totalAvailable');
+
+    // Mostra alert
+    function showAlert(message, type = 'success') {
+      alertContainer.innerHTML = `
+        <div class="alert alert-${type}">
+          ${type === 'success' ? '✅' : '❌'} ${message}
+        </div>
+      `;
+      setTimeout(() => {
+        alertContainer.innerHTML = '';
+      }, 5000);
+      
+      // Scroll to alert
+      alertContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    // Aggiorna contatore file
+    fileInput.addEventListener('change', (e) => {
+      const count = e.target.files.length;
+      if (count === 0) {
+        fileCount.textContent = 'Nessun file selezionato';
+        fileCount.style.color = '#666';
+      } else if (count < 5) {
+        fileCount.textContent = `${count} file selezionati (Minimo 5 richiesti) ⚠️`;
+        fileCount.style.color = '#e74c3c';
+      } else {
+        fileCount.textContent = `${count} file selezionati ✅`;
+        fileCount.style.color = '#27ae60';
+      }
+    });
+
+    // Carica veicoli
+    async function loadVehicles() {
+      try {
+        vehiclesList.innerHTML = '<div class="loading">⏳ Caricamento veicoli...</div>';
+        
+        const response = await fetch(`${API_URL}/admin/vehicles`);
+        const result = await response.json();
+        
+        if (!result.success) {
+          throw new Error(result.error || 'Errore nel caricamento');
+        }
+
+        const vehicles = result.data || [];
+        
+        // Aggiorna statistiche
+        totalVehicles.textContent = vehicles.length;
+        totalAuto.textContent = vehicles.filter(v => v.type === 'auto').length;
+        totalMoto.textContent = vehicles.filter(v => v.type === 'moto').length;
+        totalAvailable.textContent = vehicles.filter(v => v.status === 'available').length;
+        
+        if (vehicles.length === 0) {
+          vehiclesList.innerHTML = `
+            <div class="empty-state">
+              <svg fill="currentColor" viewBox="0 0 20 20">
+                <path d="M4 3a2 2 0 100 4h12a2 2 0 100-4H4z"></path>
+                <path fill-rule="evenodd" d="M3 8h14v7a2 2 0 01-2 2H5a2 2 0 01-2-2V8zm5 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" clip-rule="evenodd"></path>
+              </svg>
+              <h3>Nessun veicolo trovato</h3>
+              <p>Aggiungi il primo veicolo utilizzando il form</p>
+            </div>
+          `;
+          return;
+        }
+        
+        vehiclesList.innerHTML = `
+          <div class="vehicles-grid">
+            ${vehicles.map(vehicle => `
+              <div class="vehicle-card">
+                <div class="vehicle-type">${getTypeLabel(vehicle.type)}</div>
+                <img 
+                  src="${API_URL.replace('/api', '')}${vehicle.images[0] || '/placeholder.jpg'}" 
+                  alt="${vehicle.title}"
+                  class="vehicle-image"
+                  onerror="this.src='https://via.placeholder.com/320x220/1a1a1a/ffffff?text=Immagine+Non+Disponibile'"
+                >
+                <div class="vehicle-info">
+                  <div class="vehicle-title">${vehicle.title}</div>
+                  <div class="vehicle-details">
+                    <span>📅 ${vehicle.year}</span>
+                    <span>🛣️ ${vehicle.km.toLocaleString()} km</span>
+                  </div>
+                  <div class="vehicle-details">
+                    <span>⛽ ${vehicle.fuel || 'N/D'}</span>
+                    <span>⚙️ ${vehicle.transmission || 'N/D'}</span>
+                  </div>
+                  ${vehicle.power ? `<div class="vehicle-details"><span>💪 ${vehicle.power}</span></div>` : ''}
+                  <div class="vehicle-price">€ ${vehicle.price.toLocaleString()}</div>
+                  <div class="vehicle-details">
+                    <span>🖼️ ${vehicle.images.length} foto</span>
+                    <span>${getStatusLabel(vehicle.status)}</span>
+                  </div>
+                  <button class="delete-btn" onclick="deleteVehicle(${vehicle.id})">
+                    🗑️ Elimina Veicolo
+                  </button>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        `;
+      } catch (error) {
+        console.error('Errore:', error);
+        vehiclesList.innerHTML = `
+          <div class="empty-state">
+            <h3>❌ Errore nel caricamento</h3>
+            <p>${error.message}</p>
+            <button onclick="loadVehicles()" style="margin-top: 20px; width: auto; padding: 10px 30px;">
+              🔄 Riprova
+            </button>
+          </div>
+        `;
+      }
+    }
+
+    // Helper functions
+    function getTypeLabel(type) {
+      const types = {
+        'auto': '🚗 Auto',
+        'moto': '🏍️ Moto',
+        'furgone': '🚐 Furgone',
+        'camper': '🚙 Camper'
+      };
+      return types[type] || type;
+    }
+
+    function getStatusLabel(status) {
+      const statuses = {
+        'available': '✅ Disponibile',
+        'reserved': '⏳ Prenotato',
+        'sold': '❌ Venduto'
+      };
+      return statuses[status] || status;
+    }
+
+    // Aggiungi veicolo
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const files = fileInput.files;
+      if (files.length < 5) {
+        showAlert('Devi caricare almeno 5 foto del veicolo!', 'error');
+        return;
+      }
+      
+      const formData = new FormData(form);
+      
+      submitBtn.disabled = true;
+      btnText.textContent = '⏳ Caricamento in corso...';
+      
+      try {
+        const response = await fetch(`${API_URL}/admin/vehicles`, {
+          method: 'POST',
+          body: formData
+        });
+        
+        const result = await response.json();
+        
+        if (!result.success) {
+          throw new Error(result.error || 'Errore nella creazione del veicolo');
+        }
+        
+        showAlert('Veicolo aggiunto con successo! 🎉', 'success');
+        form.reset();
+        fileCount.textContent = 'Nessun file selezionato';
+        fileCount.style.color = '#666';
+        await loadVehicles();
+      } catch (error) {
+        console.error('Errore:', error);
+        showAlert(error.message, 'error');
+      } finally {
+        submitBtn.disabled = false;
+        btnText.textContent = '✅ Aggiungi Veicolo';
+      }
+    });
+
+    // Elimina veicolo
+    async function deleteVehicle(id) {
+      if (!confirm('Sei sicuro di voler eliminare questo veicolo?\n\nQuesta azione è irreversibile e cancellerà anche tutte le foto associate.')) {
+        return;
+      }
+      
+      try {
+        const response = await fetch(`${API_URL}/admin/vehicles/${id}`, {
+          method: 'DELETE'
+        });
+        
+        const result = await response.json();
+        
+        if (!result.success) {
+          throw new Error(result.error || 'Errore nell\'eliminazione');
+        }
+        
+        showAlert('Veicolo eliminato con successo!', 'success');
+        await loadVehicles();
+      } catch (error) {
+        console.error('Errore:', error);
+        showAlert(error.message, 'error');
+      }
+    }
+
+    // Carica veicoli all'avvio
+    loadVehicles();
+    
+    // Ricarica ogni 30 secondi
+    setInterval(loadVehicles, 30000);
+  </script>
+</body>
+</html>

@@ -1,0 +1,21 @@
+[
+  {
+    "id": 1,
+    "type": "auto",
+    "title": "wqeweeq",
+    "price": 234213213,
+    "year": 2000,
+    "km": 21312312,
+    "fuel": "benzina",
+    "transmission": "manuale",
+    "power": "112",
+    "status": "available",
+    "images": [
+      "/uploads/1768606850361-panuozzo.JPG",
+      "/uploads/1768606850361-roberto.png",
+      "/uploads/1768606850365-salainterna.JPG",
+      "/uploads/1768606850366-sfondo5.jpg",
+      "/uploads/1768606850367-sfondolaromana.jpg"
+    ]
+  }
+]
