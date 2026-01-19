@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', function() {
   // ====== CONFIG ======
-  const API_BASE = 'http://localhost:10000'; // Cambiato per locale
+  const API_BASE = 'https://dpcars.onrender.com';
   const CACHE_KEY = 'dpcars_vehicles_cache';
   const CACHE_TIMESTAMP_KEY = 'dpcars_vehicles_timestamp';
   const CACHE_MAX_AGE = 1000 * 60 * 60; // 1 ora
