@@ -17,7 +17,7 @@ app.use("/uploads", express.static("uploads"));
 app.use("/contents", express.static("contents"));
 app.use("/components", express.static("components"));
 app.use(express.static(__dirname)); // Serve tutti i file della root (index.html, logo.jpg, video.mp4, ecc.)
-
+app.use(express.static(path.join(__dirname, '..'))); // Serve anche la root del progetto
 // Database configuration
 const DB_DIR = "data";
 const DB_PATH = path.join(DB_DIR, "vehicles.json");

@@ -1,9 +1,10 @@
 document.addEventListener('DOMContentLoaded', function() {
   // ====== CONFIG ======
-  const API_BASE = 'https://dpcars.onrender.com';
+  const API_BASE = 'http://localhost:10000'; // Cambiato per locale
   const CACHE_KEY = 'dpcars_vehicles_cache';
   const CACHE_TIMESTAMP_KEY = 'dpcars_vehicles_timestamp';
   const CACHE_MAX_AGE = 1000 * 60 * 60; // 1 ora
+
 
   // Stato inventario
   let vehicles = [];
@@ -12,6 +13,7 @@ document.addEventListener('DOMContentLoaded', function() {
   let total = 0;
   let isOfflineMode = false;
 
+
   const inventoryGrid = document.getElementById('inventory-grid');
   const vehicleTypeFilter = document.getElementById('vehicle-type');
   const sortByFilter = document.getElementById('sort-by');
@@ -19,6 +21,7 @@ document.addEventListener('DOMContentLoaded', function() {
   const searchInput = document.getElementById('search-input');
   const loadMoreButton = document.getElementById('load-more');
   const contactForm = document.getElementById('contact-form');
+
 
   // ====== CACHE HELPERS ======
   function saveToCache(data) {
@@ -29,6 +32,7 @@ document.addEventListener('DOMContentLoaded', function() {
       console.warn('localStorage non disponibile:', e);
     }
   }
+
 
   function loadFromCache() {
     try {
@@ -47,15 +51,28 @@ document.addEventListener('DOMContentLoaded', function() {
     return null;
   }
 
+  // ====== SVUOTA CACHE (per forzare aggiornamento) ======
+  function clearCache() {
+    try {
+      localStorage.removeItem(CACHE_KEY);
+      localStorage.removeItem(CACHE_TIMESTAMP_KEY);
+    } catch (e) {
+      console.warn('Errore svuotamento cache:', e);
+    }
+  }
+
+
   // ====== SLIDER SETUP ======
   function setupSlider(card, images) {
     if (images.length <= 1) return;
+
 
     const sliderImages = card.querySelectorAll('.slider-image');
     const dots = card.querySelectorAll('.slider-dot');
     const prevBtn = card.querySelector('.slider-btn.prev');
     const nextBtn = card.querySelector('.slider-btn.next');
     let currentIndex = 0;
+
 
     function showImage(index) {
       sliderImages.forEach(img => img.classList.remove('active'));
@@ -66,6 +83,7 @@ document.addEventListener('DOMContentLoaded', function() {
       currentIndex = index;
     }
 
+
     if (prevBtn) {
       prevBtn.addEventListener('click', (e) => {
         e.preventDefault();
@@ -74,6 +92,7 @@ document.addEventListener('DOMContentLoaded', function() {
         showImage(newIndex);
       });
     }
+
 
     if (nextBtn) {
       nextBtn.addEventListener('click', (e) => {
@@ -84,6 +103,7 @@ document.addEventListener('DOMContentLoaded', function() {
       });
     }
 
+
     dots.forEach((dot, index) => {
       dot.addEventListener('click', (e) => {
         e.preventDefault();
@@ -92,9 +112,11 @@ document.addEventListener('DOMContentLoaded', function() {
       });
     });
 
+
     // Touch/swipe support
     let touchStartX = 0;
     let touchEndX = 0;
+
 
     const sliderContainer = card.querySelector('.vehicle-slider');
     
@@ -102,10 +124,12 @@ document.addEventListener('DOMContentLoaded', function() {
       touchStartX = e.changedTouches[0].screenX;
     });
 
+
     sliderContainer.addEventListener('touchend', (e) => {
       touchEndX = e.changedTouches[0].screenX;
       handleSwipe();
     });
+
 
     function handleSwipe() {
       if (touchEndX < touchStartX - 50) {
@@ -119,10 +143,12 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
 
+
   // ====== RENDER VEHICLES CON SLIDER ======
   function renderVehicles(vehiclesToRender) {
     const oldBanner = inventoryGrid.querySelector('.offline-banner');
     if (oldBanner) oldBanner.remove();
+
 
     if (isOfflineMode) {
       const banner = document.createElement('div');
@@ -136,6 +162,7 @@ document.addEventListener('DOMContentLoaded', function() {
       inventoryGrid.appendChild(banner);
     }
 
+
     if (vehiclesToRender.length === 0) {
       const emptyMsg = document.createElement('div');
       emptyMsg.style.cssText = 'grid-column: 1/-1; text-align: center; padding: 3rem; color: #666;';
@@ -144,17 +171,21 @@ document.addEventListener('DOMContentLoaded', function() {
       return;
     }
 
+
     vehiclesToRender.forEach(vehicle => {
       const statusClass = `status-${vehicle.status}`;
       const statusText = vehicle.status === 'available' ? 'Disponibile' :
                          vehicle.status === 'reserved' ? 'Prenotata' : 'Venduta';
 
+
       const vehicleType = vehicle.type === 'auto' ? 'Auto' : 'Moto';
+
 
       // Gestione immagini multiple
       const images = (vehicle.images && vehicle.images.length > 0) 
         ? vehicle.images 
         : ['https://via.placeholder.com/640x360?text=' + encodeURIComponent(vehicle.title)];
+
 
       // Crea HTML slider
       const sliderHTML = `
@@ -186,6 +217,7 @@ document.addEventListener('DOMContentLoaded', function() {
           <span class="vehicle-status ${statusClass}">${statusText}</span>
         </div>
       `;
+
 
       const card = document.createElement('div');
       card.className = 'vehicle-card';
@@ -225,6 +257,7 @@ document.addEventListener('DOMContentLoaded', function() {
       
       inventoryGrid.appendChild(card);
 
+
       // Setup slider dopo aver aggiunto la card al DOM
       if (images.length > 1) {
         setupSlider(card, images);
@@ -232,10 +265,12 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
+
   function buildQuery(page) {
     const typeValue = vehicleTypeFilter.value;
     const sortValue = sortByFilter.value;
     const searchValue = searchInput.value.trim();
+
 
     const params = new URLSearchParams();
     params.set('type', typeValue || 'all');
@@ -246,22 +281,31 @@ document.addEventListener('DOMContentLoaded', function() {
     return params.toString();
   }
 
+
   async function loadVehiclesPage(page, mode = 'replace') {
     if (inventoryGrid) inventoryGrid.style.opacity = '0.6';
     if (loadMoreButton) loadMoreButton.disabled = true;
 
+    // SVUOTA CACHE per forzare ricarica fresca
+    clearCache();
+
+
     try {
       const url = `${API_BASE}/api/vehicles?${buildQuery(page)}`;
       const res = await fetch(url, { 
-        signal: AbortSignal.timeout(5000)
+        signal: AbortSignal.timeout(5000),
+        cache: 'no-store' // Disabilita cache browser
       });
       
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
+
       const json = await res.json();
+
 
       total = Number(json.total) || 0;
       const pageData = Array.isArray(json.data) ? json.data : [];
+
 
       if (mode === 'append') {
         vehicles = vehicles.concat(pageData);
@@ -269,11 +313,14 @@ document.addEventListener('DOMContentLoaded', function() {
         vehicles = pageData;
       }
 
+
       saveToCache(vehicles);
       isOfflineMode = false;
 
+
       inventoryGrid.innerHTML = '';
       renderVehicles(vehicles);
+
 
       const loadedCount = vehicles.length;
       const hasMore = loadedCount < total;
@@ -312,10 +359,13 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
 
+
   async function refreshInventoryFromFilters() {
     currentPage = 1;
+    clearCache(); // Svuota cache prima di ricaricare
     await loadVehiclesPage(currentPage, 'replace');
   }
+
 
   function syncSortFilters(value) {
     sortByFilter.value = value;
@@ -323,10 +373,12 @@ document.addEventListener('DOMContentLoaded', function() {
     refreshInventoryFromFilters();
   }
 
+
   // ====== EVENT LISTENERS ======
   vehicleTypeFilter.addEventListener('change', refreshInventoryFromFilters);
   sortByFilter.addEventListener('change', (e) => syncSortFilters(e.target.value));
   sortByHeaderFilter.addEventListener('change', (e) => syncSortFilters(e.target.value));
+
 
   let searchTimer = null;
   searchInput.addEventListener('input', () => {
@@ -334,14 +386,17 @@ document.addEventListener('DOMContentLoaded', function() {
     searchTimer = setTimeout(refreshInventoryFromFilters, 250);
   });
 
+
   loadMoreButton.addEventListener('click', async () => {
     currentPage += 1;
     await loadVehiclesPage(currentPage, 'append');
   });
 
+
   if (contactForm) {
     contactForm.addEventListener('submit', function(e) {
       e.preventDefault();
+
 
       const name = document.getElementById('form-name').value;
       const email = document.getElementById('form-email').value;
@@ -349,11 +404,13 @@ document.addEventListener('DOMContentLoaded', function() {
       const reason = document.getElementById('form-reason').value;
       const message = document.getElementById('form-message').value;
 
+
       console.log({name, email, phone, reason, message});
       alert('Grazie ' + name + '! La tua richiesta è stata inviata. Ti contatteremo al più presto.');
       this.reset();
     });
   }
+
 
   // ====== INITIAL LOAD ======
   refreshInventoryFromFilters();
